@@ -5,6 +5,7 @@ function FileUpload() {
     const [uploadStatus, setUploadStatus] = useState('');
     const [uploadLoading, setUploadLoading] = useState(false);
     const [fileFeedback, setFileFeedback] = useState('');
+    const token = localStorage.getItem('jwt_token');
 
     const handleFileUpload = async (e) => {
         e.preventDefault();
@@ -21,6 +22,9 @@ function FileUpload() {
         try {
           const response = await fetch('http://localhost:8000/api/upload-essay-file', {
             method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
             body: formData  
           });
     

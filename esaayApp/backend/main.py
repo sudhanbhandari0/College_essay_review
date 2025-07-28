@@ -10,6 +10,8 @@ from file_utils import extract_text_from_pdf, extract_text_from_docx
 from s3_utils import upload_file_to_s3
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from auth import create_access_token, get_current_user
+
 
 import uuid
 import tempfile
@@ -50,14 +52,15 @@ def read_root():
     return {"message": "Hello World"}
 
 @app.post("/api/analyze-essay")
-def analyze_essay(essay: EssaySubmission, db: Session = Depends(get_db)):
+def analyze_essay(essay: EssaySubmission, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
 
+    #print(f"User {current_user['sub']} is analyzing an essay")
     ai_feedback = ai_service.generate_feedback(essay.content)
 
     # Save essay to database
     db_essay = Essay(
         content=essay.content,
-        author=essay.author,
+        author=current_user['sub'],
         content_length=len(essay.content),
         feedback=ai_feedback
     )
@@ -81,7 +84,8 @@ def analyze_essay(essay: EssaySubmission, db: Session = Depends(get_db)):
 # Stores the file URL in the database
 # Returns success message with file URL
 @app.post("/api/upload-essay-file")
-async def upload_essay_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_essay_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    print(f"User {current_user['sub']} is uploading a file")
     """Upload essay file (PDF/DOC) to S3"""
     try:
         # Read file content
@@ -167,7 +171,18 @@ async def google_auth(payload: dict):
             os.getenv("GOOGLE_CLIENT_ID")
         )
         print("Verified token info:", idinfo)
+
+        user_data = {
+            "sub": idinfo["email"],
+            "name": idinfo.get("name"),
+            "email": idinfo["email"],
+            "picture": idinfo.get("picture")
+        }
+
+        access_token = create_access_token(user_data)
+
         return {
+            "jwt_token": access_token,
             "email": idinfo["email"],
             "name": idinfo.get("name"),
             "picture": idinfo.get("picture")

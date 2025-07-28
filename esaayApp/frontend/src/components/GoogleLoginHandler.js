@@ -17,6 +17,9 @@ function GoogleLoginHandler({ onLoginSuccess }) {
 
       const data = await response.json();
       if (response.ok) {
+        //console.log('JWT token from backend:', data.jwt_token);
+        // Store JWT token for future API calls
+        localStorage.setItem('jwt_token', data.jwt_token);
         onLoginSuccess(data); // Pass user/session info up to parent
       } else {
         alert('Login failed: ' + (data.error || 'Unknown error'));

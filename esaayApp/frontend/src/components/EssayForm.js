@@ -4,6 +4,7 @@ function EssayForm() {
     const [essay, setEssay] = useState('');
     const [feedback, setFeedback] = useState('');
     const [loading, setLoading] = useState(false);
+    const token = localStorage.getItem('jwt_token');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -14,6 +15,7 @@ function EssayForm() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
               content: essay,
